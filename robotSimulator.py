@@ -7,6 +7,8 @@ from joy import JoyApp, progress
 from joy.decl import *
 from joy.plans import Plan
 from plotIX import JoyAppWptSensorMixin
+import numpy as np
+import time
 
 from waypointShared import (
     WAYPOINT_HOST, WAYPOINT_MSG_PORT
@@ -119,6 +121,86 @@ class MoveRight(Plan):
       yield self.forDuration(dt)
 
 
+class MoveOnU(Plan):
+    """
+    Plan simulates robot moving by it self.
+
+    (MODIFY THIS FOR YOUR ROBOT)
+    """
+    def __init__(self,app, moveF, moveB, moveL, moveR, nxtwaypoint, meas_curr, tolerance =10):
+      Plan.__init__(self,app)    
+      self.moveF = moveF
+      self.moveR = moveR
+      self.moveL = moveL
+      self.moveB = moveB
+      self.nxtwaypoint = nxtwaypoint
+      self.meas_curr = meas_curr
+      self.tolerance = tolerance
+      self.flag = 0
+
+    def behavior(self):
+        progress(self.nxtwaypoint)
+        progress(self.meas_curr)
+        
+            
+            
+        #navigation when both sensors have readings above 150
+        if((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])<0): # to make the range of x from -150 to 150 to 0 to 300
+            
+            if(self.meas_curr[0]> 150 and self.meas_curr[1]>150):
+                if self.moveR.isRunning(): return
+                self.moveR.dist = 30.0
+                self.moveR.start()
+                return progress("(say) Move Right")
+            else:
+                if((self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])<0):
+                    if self.moveF.isRunning(): return
+                    self.moveF.dist = 30.0
+                    self.moveF.start()
+                    return progress("(say) Move forward")
+                else:
+                    if self.moveB.isRunning(): return
+                    self.moveB.dist = 30.0
+                    self.moveB.start()
+                    return progress("(say) Move Backwards")
+                
+        elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])>0):
+            if(self.meas_curr[0] > 150 and self.meas_curr[1]>150):
+                if self.moveL.isRunning(): return
+                self.moveL.dist = 30.0
+                self.moveL.start()
+                return progress("(say) Move Left")
+            
+            else:
+                if((self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])>0):
+                    if self.moveF.isRunning(): return
+                    self.moveF.dist = 30.0
+                    self.moveF.start()
+                    return progress("(say) Move forward")
+                else:
+                    if self.moveB.isRunning(): return
+                    self.moveB.dist = 30.0
+                    self.moveB.start()
+                    return progress("(say) Move Backwards")
+                
+        else:
+            #navigation when sensor readings are different
+            if(self.meas_curr[0]>self.meas_curr[1]):
+                if self.moveL.isRunning(): return
+                self.moveL.dist = 30.0
+                self.moveL.start()
+                return progress("(say) Move Left")
+            elif(self.meas_curr[1]>self.meas_curr[0]):
+                if self.moveR.isRunning(): return
+                self.moveR.dist = 30.0
+                self.moveR.start()
+                return progress("(say) Move Right")
+       
+ 
+      
+
+      
+
 class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
   """Concrete class RobotSimulatorApp <<singleton>>
      A JoyApp which runs the DummyRobotSim robot model in simulation, and
@@ -156,6 +238,12 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     self.moveB = MoveBackward(self,self.robSim)
     self.moveL = MoveLeft(self,self.robSim)
     self.moveR = MoveRight(self,self.robSim)
+   
+    
+    self.nxtwaypoint=None
+    self.curwaypoint=None
+    self.meas_curr = None
+    self.moveA= MoveOnU(self, self.moveF,self.moveB,self.moveL,self.moveR, self.nxtwaypoint, np.array([0,0]), 10)
 
   def showSensors( self ):
     """
@@ -165,11 +253,15 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     ts,f,b = self.sensor.lastSensor
     if ts:
       progress( "Sensor: %4d f %d b %d" % (ts-self.T0,f,b)  )
+      self.moveA.meas_curr=[f,b]
+      
     else:
       progress( "Sensor: << no reading >>" )
     ts,w = self.sensor.lastWaypoints
     if ts:
       progress( "Waypoints: %4d " % (ts-self.T0) + str(w))
+      self.moveA.nxtwaypoint = w
+     
     else:
       progress( "Waypoints: << no reading >>" )
 
@@ -206,25 +298,35 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     if self.moveF.isRunning(): return
     self.moveF.dist = 100.0
     self.moveF.start()
-    return progress("(say) Move forward")
+    return progress(" Move forward")
 
   def on_K_DOWN(self,evt):
     if self.moveB.isRunning(): return
-    self.moveB.dist = -100.0
+    self.moveB.dist = 100.0
     self.moveB.start()
-    return progress("(say) Move back")
+    return progress(" Move back")
   
   def on_K_LEFT(self,evt):
     if self.moveL.isRunning(): return
-    self.moveL.ang = -100
+    self.moveL.dist = 100
     self.moveL.start()
-    return progress("(say) Turn left")
+    return progress(" Move left")
 
   def on_K_RIGHT(self,evt):
     if self.moveR.isRunning(): return
-    self.moveR.ang =100
+    self.moveR.dist =100
     self.moveR.start()
-    return progress("(say) Turn right")
+    return progress(" Move right")
+
+  def on_K_a(self,evt):
+    if self.moveA.isRunning(): return
+    while(1):
+        yield
+        time.sleep(0.3)
+        if self.moveA.isRunning(): pass
+        else: self.moveA.start()
+        
+        progress(" Auto mode")
 
   def onEvent( self, evt ):
     #### DO NOT MODIFY --------------------------------------------

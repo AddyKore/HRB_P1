@@ -161,13 +161,13 @@ class SimpleRobotSim( RobotSimInterface ):
         self.ang = 1+0j
         self.tang = 1+0j
 
-    def movef(self,dist):
+    def moveb(self,dist):
         # Move in direction of self.ang
         #  If we assume Gaussian errors in velocity, distance error will grow
         #  as sqrt of goal distance
         self.pos += (1+0j) * dist + randn()*self.dNoise*sqrt(abs(dist))
     
-    def moveb(self,dist):
+    def movef(self,dist):
         # Move in direction of self.ang
         #  If we assume Gaussian errors in velocity, distance error will grow
         #  as sqrt of goal distance
@@ -184,6 +184,8 @@ class SimpleRobotSim( RobotSimInterface ):
         #  If we assume Gaussian errors in velocity, distance error will grow
         #  as sqrt of goal distance
         self.pos += (0+1j)  * dist + randn()*self.dNoise*sqrt(abs(dist))
+        
+    
 
 
 
