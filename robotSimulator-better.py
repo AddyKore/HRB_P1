@@ -136,141 +136,122 @@ class MoveOnU(Plan):
       self.nxtwaypoint = nxtwaypoint
       self.meas_curr = meas_curr
       self.tolerance = tolerance
-      self.flag=0
-
+      self.flag = 0
+      self.multi = 0
 
     def behavior(self):
         progress(self.nxtwaypoint)
         progress(self.meas_curr)
+        for i in range(100):
+            progress("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
         
-        '''
-        if(self.meas_curr[0]< 100 and self.meas_curr[1]<100):
-            dist=0
-            while(self.meas_curr[0]< 170 and self.meas_curr[1]<170):
-                prog(self.meas_curr)
+        if(self.meas_curr[0]<100 or self.meas_curr[1]<100 ):
+            #for i in range(100):
+            #    progress("LOOOOOOOOOOOOOOOOOOOOOOOSSSSSSSSSSSSSSTTTTTTTTTTTTT")
+            #    progress("(say) Move Right")
+            #navigation when sensor readings are different
+            
+            while(self.meas_curr[0]<150 and self.meas_curr[1]<150):
+                for i in range(100):
+                    progress(self.flag)
+                   
                 yield
-                dist = dist+5
-                if self.moveR.isRunning(): return
-                self.moveR.dist = dist
-                self.moveR.start()
-                
-                self.moveF.dist = dist
-                self.moveF.start()
-                
-                self.moveL.dist = 2*dist
-                self.moveL.start()
-                
-                self.moveB.dist = 2*dist
-                self.moveB.start()
-                
-                self.moveR.dist = 2*dist
-                self.moveR.start()
-                
-                self.moveF.dist = dist
-                self.moveF.start()
-        '''
+                if self.flag==0:
+                  self.moveR.dist = 30.0+self.multi
+                  self.moveR.start()
+                  for i in range(100):
+                    progress("LOOOOOOOOOOOOOOOOOOOOOOOSSSSSSSSSSSSSSTTTTTTTTTTTTT")
+                    progress("(say) Move Right")
+                  self.flag=1
+                elif self.flag==1:
+                  self.moveL.dist = 60.0+self.multi
+                  self.moveL.start()
+                  for i in range(100):
+                    progress("LOOOOOOOOOOOOOOOOOOOOOOOSSSSSSSSSSSSSSTTTTTTTTTTTTT")
+                    progress("(say) Move Left")
+                  self.flag=2
+                elif self.flag==2:
+                  self.moveR.dist = 30.0+self.multi
+                  self.moveR.start()
+                  for i in range(100):
+                    progress("LOOOOOOOOOOOOOOOOOOOOOOOSSSSSSSSSSSSSSTTTTTTTTTTTTT")
+                    progress("(say) Move Right")
+                  self.moveF.dist = 30.0+self.multi
+                  self.moveF.start()
+                  for i in range(100):
+                    progress("LOOOOOOOOOOOOOOOOOOOOOOOSSSSSSSSSSSSSSTTTTTTTTTTTTT")
+                    progress("(say) Move forward")
+                  self.flag=3
+                elif self.flag==3:
+                  self.moveB.dist = 60.0+self.multi
+                  self.moveB.start()
+                  for i in range(100):
+                    progress("LOOOOOOOOOOOOOOOOOOOOOOOSSSSSSSSSSSSSSTTTTTTTTTTTTT")
+                    progress("(say) Move Backwards")
+                  self.flag =4
+                elif self.flag==4:
+                  self.moveF.dist = 30.0+self.multi
+                  self.moveF.start()
+                  for i in range(100):
+                    progress("LOOOOOOOOOOOOOOOOOOOOOOOSSSSSSSSSSSSSSTTTTTTTTTTTTT")
+                    progress("(say) Move forward")
+                  self.flag=0
+                  self.multi+=30
+
+
+
+                    
+                    
+            
+       
         
-                
-                
             
             
         #navigation when both sensors have readings above 150
         if((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])<0): # to make the range of x from -150 to 150 to 0 to 300
-        
+            flag=0
+            for i in range(100):
+                progress("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
             if(self.meas_curr[0]> 150 and self.meas_curr[1]>150):
                 if self.moveR.isRunning(): return
                 self.moveR.dist = 30.0
                 self.moveR.start()
-                for i in range(100):
-                    progress("Move Right")
-                return 
-            elif(self.meas_curr[0]> 10 and self.meas_curr[1]>10):
+                return progress("(say) Move Right")
+            else:
                 if((self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])<0):
                     if self.moveF.isRunning(): return
                     self.moveF.dist = 30.0
                     self.moveF.start()
-                    for i in range(100):
-                        progress("Move forward")
-                    return 
-                elif((self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])>0):
+                    return progress("(say) Move forward")
+                else:
                     if self.moveB.isRunning(): return
                     self.moveB.dist = 30.0
                     self.moveB.start()
-                    for i in range(100):
-                        progress("Move Backwards")
-                    return
-            else:
-                for i in range(100):
-                    progress("$$$$$$LOST - need to go positive $$$$$$$$")
-                if self.moveR.isRunning(): return
-                self.moveR.dist = 30.0
-                self.moveR.start()
-                return
-            
+                    return progress("(say) Move Backwards")
                 
         elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])>0):
-           
+            flag=0
+            for i in range(100):
+                progress("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
             if(self.meas_curr[0] > 150 and self.meas_curr[1]>150):
                 if self.moveL.isRunning(): return
                 self.moveL.dist = 30.0
                 self.moveL.start()
-                for i in range(100):
-                    progress("Move Left")
-                return
+                return progress("(say) Move Left")
             
-            elif(self.meas_curr[0]> 10 and self.meas_curr[1]>10):
-                
-                if((self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])<0):
-                    if self.moveF.isRunning(): return
-                    self.moveF.dist = 30.0
-                    self.moveF.start()
-                    for i in range(100):
-                        progress("Move forward")
-                    return 
-                
-                elif((self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])>0):
-                    if self.moveB.isRunning(): return
-                    self.moveB.dist = 30.0
-                    self.moveB.start()
-                    for i in range(100):
-                        progress("Move Backward")
-                    return 
-                
             else:
-                for i in range(100):
-                    progress("$$$$$$LOST - need to go negative $$$$$$$$")
-                if self.moveL.isRunning(): return
-                self.moveL.dist = 30.0
-                self.moveL.start()
-                return
-                
-                '''    
-                if self.flag==0:
+                if((self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])>0):
                     if self.moveF.isRunning(): return
                     self.moveF.dist = 30.0
                     self.moveF.start()
-                    self.flag=1
-                    for i in range(100):
-                        progress("%%%%%LOST@@@@@@ Move Forward")
-                    return
-                elif self.flag==1:
+                    return progress("(say) Move forward")
+                else:
                     if self.moveB.isRunning(): return
                     self.moveB.dist = 30.0
                     self.moveB.start()
-                    self.flag=2
-                    for i in range(100):
-                        progress("%%%%%LOST@@@@@@ Move Backward")
-                    return
-                elif self.flag==2:
-                    if self.moveL.isRunning(): return
-                    self.moveL.dist = 30.0
-                    self.moveL.start()
-                    self.flag=0 
-                    for i in range(100):
-                        progress("%%%%%LOST@@@@@@ Move LEFT")
-                    return
-                '''
-                
+                    return progress("(say) Move Backwards")
+
+            
  
       
 
@@ -327,14 +308,14 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     # This code should help you understand how you access sensor information
     ts,f,b = self.sensor.lastSensor
     if ts:
-      #progress( "Sensor: %4d f %d b %d" % (ts-self.T0,f,b)  )
+      progress( "Sensor: %4d f %d b %d" % (ts-self.T0,f,b)  )
       self.moveA.meas_curr=[f,b]
       
     else:
       progress( "Sensor: << no reading >>" )
     ts,w = self.sensor.lastWaypoints
     if ts:
-      #progress( "Waypoints: %4d " % (ts-self.T0) + str(w))
+      progress( "Waypoints: %4d " % (ts-self.T0) + str(w))
       self.moveA.nxtwaypoint = w
      
     else:
@@ -401,14 +382,14 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
         if self.moveA.isRunning(): pass
         else: self.moveA.start()
         
-        #progress(" Auto mode")
+        progress(" Auto mode")
 
   def onEvent( self, evt ):
     #### DO NOT MODIFY --------------------------------------------
     # periodically, show the sensor reading we got from the waypointServer
     if self.timeForStatus():
       self.showSensors()
-      #progress( self.robSim.logLaserValue(self.now) )
+      progress( self.robSim.logLaserValue(self.now) )
       # generate simulated laser readings
     elif self.timeForLaser():
       self.robSim.logLaserValue(self.now)

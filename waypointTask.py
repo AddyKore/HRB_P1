@@ -83,6 +83,7 @@ def doVis(ax,mk,msg,prj = None):
     ##progress("VIS%s %s(*%s,**%s)" % (mk,mn,arg,msg))
     return meth(*arg,**msg)
 
+
 ###!!! from pdb import set_trace as BRK
 SRV_PORT = 8080
 for arg in argv:
@@ -110,6 +111,7 @@ def _animation(f1):
   except:
     app.stop()
     raise
+    
   client = None
   logfile = None
   # Axes for arena display

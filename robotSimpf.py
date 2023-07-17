@@ -9,6 +9,7 @@ from joy.plans import Plan
 from plotIX import JoyAppWptSensorMixin
 import numpy as np
 import time
+from partical import partFilter
 
 from waypointShared import (
     WAYPOINT_HOST, WAYPOINT_MSG_PORT
@@ -43,6 +44,8 @@ class MoveForward(Plan):
     for k in range(self.N):
       s.movef(step)
       yield self.forDuration(dt)
+      
+      
       
 class MoveBackward(Plan):
   """
@@ -121,28 +124,163 @@ class MoveRight(Plan):
       yield self.forDuration(dt)
 
 
+#move plans
+class smallMoveForward(Plan):
+  """
+  Plan simulates robot moving forward or back over a period of time.
+
+  (MODIFY THIS FOR YOUR ROBOT)
+  """
+  def __init__(self,app,simIX):
+    Plan.__init__(self,app)
+    self.simIX = simIX
+    # Distance to travel
+    self.dist = 10
+    # Duration of travel [sec]
+    self.dur = 3
+    # Number of intermediate steps
+    self.N = 10
+
+  def behavior(self):
+    s = self.simIX
+    # Compute step along the forward direction
+    step = self.dist / float(self.N)
+    dt = self.dur / float(self.N)
+    for k in range(self.N):
+      s.movef(step)
+      yield self.forDuration(dt)
+      
+      
+      
+class smallMoveBackward(Plan):
+  """
+  Plan simulates robot moving forward or back over a period of time.
+
+  (MODIFY THIS FOR YOUR ROBOT)
+  """
+  def __init__(self,app,simIX):
+    Plan.__init__(self,app)
+    self.simIX = simIX
+    # Distance to travel
+    self.dist = 1
+    # Duration of travel [sec]
+    self.dur = 3
+    # Number of intermediate steps
+    self.N = 10
+
+  def behavior(self):
+    s = self.simIX
+    # Compute step along the forward direction
+    step = self.dist / float(self.N)
+    dt = self.dur / float(self.N)
+    for k in range(self.N):
+      s.moveb(step)
+      yield self.forDuration(dt)
+
+class smallMoveLeft(Plan):
+  """
+  Plan simulates robot moving forward or back over a period of time.
+
+  (MODIFY THIS FOR YOUR ROBOT)
+  """
+  def __init__(self,app,simIX):
+    Plan.__init__(self,app)
+    self.simIX = simIX
+    # Distance to travel
+    self.dist = 1
+    # Duration of travel [sec]
+    self.dur = 3
+    # Number of intermediate steps
+    self.N = 10
+
+  def behavior(self):
+    s = self.simIX
+    # Compute step along the forward direction
+    step = self.dist / float(self.N)
+    dt = self.dur / float(self.N)
+    for k in range(self.N):
+      s.movel(step)
+      yield self.forDuration(dt)
+      
+      
+class smallMoveRight(Plan):
+  """
+  Plan simulates robot moving forward or back over a period of time.
+
+  (MODIFY THIS FOR YOUR ROBOT)
+  """
+  def __init__(self,app,simIX):
+    Plan.__init__(self,app)
+    self.simIX = simIX
+    # Distance to travel
+    self.dist = 1
+    # Duration of travel [sec]
+    self.dur = 3
+    # Number of intermediate steps
+    self.N = 10
+
+  def behavior(self):
+    s = self.simIX
+    # Compute step along the forward direction
+    step = self.dist / float(self.N)
+    dt = self.dur / float(self.N)
+    for k in range(self.N):
+      s.mover(step)
+      yield self.forDuration(dt)
+
+
+
 class MoveOnU(Plan):
     """
     Plan simulates robot moving by it self.
 
     (MODIFY THIS FOR YOUR ROBOT)
     """
-    def __init__(self,app, moveF, moveB, moveL, moveR, nxtwaypoint, meas_curr, tolerance =10):
+    def __init__(self,app, moveF, moveB, moveL, moveR,pf,nxtwaypoint, meas_curr, tolerance =10):
       Plan.__init__(self,app)    
       self.moveF = moveF
       self.moveR = moveR
       self.moveL = moveL
       self.moveB = moveB
+      self.pf=pf
       self.nxtwaypoint = nxtwaypoint
       self.meas_curr = meas_curr
       self.tolerance = tolerance
       self.flag = 0
+      self.currWaypoint = np.zeros([0,0])
+      
+    def updateParticles(self,dist):
+        self.pf.justCheck()
+        #self.pf.actionModel(dist)
+        self.pf.actionModel(dist)
+        lastwp = self.nxtwaypoint[0][0]+1j*self.nxtwaypoint[0][1]
+        nxtwp = self.nxtwaypoint[1][0]+1j*self.nxtwaypoint[1][1]
+
+        self.pf.sensorModel(lastwp, nxtwp)
+        self.pf.correction(self.meas_curr)
+        
+        #progress(self.pf.mu/100)
+        
 
     def behavior(self):
-        progress(self.nxtwaypoint)
-        progress(self.meas_curr)
-        for i in range(100):
-            progress("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        #progress(self.nxtwaypoint)
+        #progress(self.meas_curr)
+       # for i in range(100):
+            #progress("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        if self.currWaypoint != self.nxtwaypoint[0]:
+            num_particles = 100
+            Q=0.01
+            M=np.array([1,1,(np.pi/180*3)**2])
+            x = self.nxtwaypoint[0][0]
+            y = self.nxtwaypoint[0][1]
+            init_state= np.array([x,y,0])
+            #init_state= np.array([-1,-45,0])
+            init_cov = np.diag([4,4, (np.pi/180*3)**2])
+            init_pos = {"mu":init_state, "Sigma":init_cov}
+                  
+            self.pf = partFilter(num_particles, init_pos, M,Q)
+            
+            self.currWaypoint = self.nxtwaypoint[0]
         
         if(self.meas_curr[0]<100 or self.meas_curr[1]<100 ):
             #navigation when sensor readings are different
@@ -153,45 +291,61 @@ class MoveOnU(Plan):
                     if self.moveR.isRunning(): pass
                     self.moveR.dist = 10.0
                     self.moveR.start()
+
+                    self.updateParticles(np.array([self.moveR.dist/3,0,0]))
+                    
                     
                     if self.moveF.isRunning(): pass
                     self.moveF.dist = 10.0
                     self.moveF.start()
+
+                    self.updateParticles(np.array([0,self.moveF.dist/10,0]))
                     
-                    progress("(say) North east")
+                    #progress("(say) North east")
                     
                 elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])>0 and (self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])>0):# nxt target in -ve x and y
                     if self.moveL.isRunning(): pass
                     self.moveL.dist = 10.0
                     self.moveL.start()
+
+                    self.updateParticles(np.array([-1*self.moveL.dist/3,0,0]))
                     
                     if self.moveB.isRunning(): pass
                     self.moveB.dist = 10.0
                     self.moveB.start()
+
+                    self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
                     
-                    progress("(say) South west")
+                    #progress("(say) South west")
                     
                 elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])<0 and (self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])>0):# nxt target in +ve x and -ve y
                     if self.moveR.isRunning(): pass
                     self.moveR.dist = 10.0
                     self.moveR.start()
+
+                    self.updateParticles(np.array([self.moveR.dist/3,0,0]))
                     
                     if self.moveB.isRunning(): pass
                     self.moveB.dist = 10.0
                     self.moveB.start()
+                    self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
                     
-                    progress("(say) South east")
+                    #progress("(say) South east")
                     
                 elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])>0 and (self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])<0):# nxt target in -ve x and y
                     if self.moveL.isRunning(): pass
                     self.moveL.dist = 10.0
                     self.moveL.start()
+
+                    self.updateParticles(np.array([-1*self.moveL.dist/3,0,0]))
                     
                     if self.moveF.isRunning(): pass
                     self.moveF.dist = 10.0
                     self.moveF.start()
+
+                    self.updateParticles(np.array([0,self.moveF.dist/10,0]))
                     
-                    progress("(say) North west")
+                    #progress("(say) North west")
                     
                     
             
@@ -201,32 +355,38 @@ class MoveOnU(Plan):
             
         #navigation when both sensors have readings above 150
         if((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])<0): # to make the range of x from -150 to 150 to 0 to 300
-            for i in range(100):
-                progress("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+
             if(self.meas_curr[0]> 150 and self.meas_curr[1]>150):
                 if self.moveR.isRunning(): return
                 self.moveR.dist = 30.0
                 self.moveR.start()
+                
+                self.updateParticles(np.array([self.moveR.dist/3,0,0]))
                 return progress("(say) Move Right")
             else:
                 if((self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])<0):
                     if self.moveF.isRunning(): return
                     self.moveF.dist = 30.0
                     self.moveF.start()
+
+                    self.updateParticles(np.array([0,self.moveF.dist/10,0]))
                     return progress("(say) Move forward")
                 else:
                     if self.moveB.isRunning(): return
                     self.moveB.dist = 30.0
                     self.moveB.start()
+
+                    self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
                     return progress("(say) Move Backwards")
                 
         elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])>0):
-            for i in range(100):
-                progress("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
             if(self.meas_curr[0] > 150 and self.meas_curr[1]>150):
                 if self.moveL.isRunning(): return
                 self.moveL.dist = 30.0
                 self.moveL.start()
+
+                self.updateParticles(np.array([-1*self.moveL.dist/3,0,0]))
                 return progress("(say) Move Left")
             
             else:
@@ -234,11 +394,15 @@ class MoveOnU(Plan):
                     if self.moveF.isRunning(): return
                     self.moveF.dist = 30.0
                     self.moveF.start()
+
+                    self.updateParticles(np.array([0,self.moveF.dist/10,0]))
                     return progress("(say) Move forward")
                 else:
                     if self.moveB.isRunning(): return
                     self.moveB.dist = 30.0
                     self.moveB.start()
+
+                    self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
                     return progress("(say) Move Backwards")
 
             
@@ -285,11 +449,15 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     self.moveL = MoveLeft(self,self.robSim)
     self.moveR = MoveRight(self,self.robSim)
    
-    
+    self.movesF = smallMoveForward(self,self.robSim)
+    self.movesB = smallMoveBackward(self,self.robSim)
+    self.movesL = smallMoveLeft(self,self.robSim)
+    self.movesR = smallMoveRight(self,self.robSim)
+    self.pf=None
     self.nxtwaypoint=None
     self.curwaypoint=None
     self.meas_curr = None
-    self.moveA= MoveOnU(self, self.moveF,self.moveB,self.moveL,self.moveR, self.nxtwaypoint, np.array([0,0]), 10)
+    self.moveA= MoveOnU(self, self.moveF,self.moveB,self.moveL,self.moveR,self.pf, self.nxtwaypoint, np.array([0,0]), 10)
 
   def showSensors( self ):
     """
@@ -298,18 +466,23 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     # This code should help you understand how you access sensor information
     ts,f,b = self.sensor.lastSensor
     if ts:
-      progress( "Sensor: %4d f %d b %d" % (ts-self.T0,f,b)  )
+      #progress( "Sensor: %4d f %d b %d" % (ts-self.T0,f,b)  )
       self.moveA.meas_curr=[f,b]
       
     else:
+        
       progress( "Sensor: << no reading >>" )
+      
     ts,w = self.sensor.lastWaypoints
+    
     if ts:
-      progress( "Waypoints: %4d " % (ts-self.T0) + str(w))
+      #progress( "Waypoints: %4d " % (ts-self.T0) + str(w))
       self.moveA.nxtwaypoint = w
+      self.nxtwaypoint = w
+      
      
     else:
-      progress( "Waypoints: << no reading >>" )
+        progress( "Waypoint: << no reading >>" )
 
   def doVis(self):
     ## Example of visualization API
@@ -333,9 +506,9 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
         [int(v) for v in vl.real],
         [int(v) for v in vl.imag],
         c='g')
-    x,y = [1000,2000,3000,3000,2000],[1000,2000,3000,1000,1000]
-    self.visRobot('plot',x,y,c='r') # plot a red square
+    self.visRobot('grid',1) 
     
+
    
     
     # Start a new visual in arena subplot
@@ -352,9 +525,25 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
         [int(v) for v in vl.real],
         [int(v) for v in vl.imag],
         c='g',alpha=0.5)
+    self.visArena('plot',[1000,2000,2000,1000],[1000,2000,1000,1000],c='r')
+    
     # We can call any plot axis class methods, e.g. grid
     self.visArena('grid',1)  
-  
+
+  def on_K_p(self,evt):
+    num_particles = 100
+    Q=0.01
+    M=np.array([1,1,(np.pi/180*3)**2])
+    x = self.nxtwaypoint[0][0]
+    y = self.nxtwaypoint[0][1]
+    init_state= np.array([x,y,0])
+    #init_state= np.array([-1,-45,0])
+    init_cov = np.diag([4,4, (np.pi/180*3)**2])
+    init_pos = {"mu":init_state, "Sigma":init_cov}
+          
+    self.moveA.pf = partFilter(num_particles, init_pos, M,Q)
+    return progress(" ")
+    
   def on_K_UP(self,evt):
     if self.moveF.isRunning(): return
     self.moveF.dist = 100.0
@@ -379,7 +568,60 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     self.moveR.start()
     return progress(" Move right")
 
+  def on_K_u(self,evt):
+    if self.moveF.isRunning(): return
+    self.moveF.dist = 300.0
+    self.moveF.start()
+    return progress(" Move forward")
+
+  def on_K_j(self,evt):
+    if self.moveB.isRunning(): return
+    self.moveB.dist = 300.0
+    self.moveB.start()
+    return progress(" Move back")
+  
+  def on_K_h(self,evt):
+    if self.moveL.isRunning(): return
+    self.moveL.dist = 300
+    self.moveL.start()
+    return progress(" Move left")
+
+  def on_K_k(self,evt):
+    if self.moveR.isRunning(): return
+    self.moveR.dist =300
+    self.moveR.start()
+    return progress(" Move right")
+
+
+  def on_K_w(self,evt):
+    if self.movesF.isRunning(): return
+    self.movesF.dist = 10.0
+    self.movesF.start()
+    return progress(" Move forward")
+
+  def on_K_s(self,evt):
+    if self.movesB.isRunning(): return
+    self.movesB.dist = 10.0
+    self.movesB.start()
+    return progress(" Move back")
+  
   def on_K_a(self,evt):
+    if self.movesL.isRunning(): return
+    self.movesL.dist = 10
+    self.movesL.start()
+    return progress(" Move left")
+
+  def on_K_d(self,evt):
+    if self.movesR.isRunning(): return
+    self.movesR.dist =10
+    self.movesR.start()
+    return progress(" Move right")
+    
+    
+        
+
+
+  def on_K_o(self,evt):
     if self.moveA.isRunning(): return
     while(1):
         yield
@@ -387,14 +629,14 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
         if self.moveA.isRunning(): pass
         else: self.moveA.start()
         
-        progress(" Auto mode")
+        #progress(" Auto mode")
 
   def onEvent( self, evt ):
     #### DO NOT MODIFY --------------------------------------------
     # periodically, show the sensor reading we got from the waypointServer
     if self.timeForStatus():
       self.showSensors()
-      progress( self.robSim.logLaserValue(self.now) )
+      #progress( self.robSim.logLaserValue(self.now) )
       # generate simulated laser readings
     elif self.timeForLaser():
       self.robSim.logLaserValue(self.now)

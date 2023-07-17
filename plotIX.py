@@ -152,7 +152,7 @@ if __name__=="__main__":
         wtm.visArena('plot',x,y,c='r') # plot a red square
         wtm.visArena('~plot',x,y,c='g') # plot a green square, xformed
         wtm.visRobotClear()
-        wtm.visRobot('plot',x,y,c='b') # plot a blue square
+        wtm.visRobot('plot',x,y,c='b-') # plot a blue square
         wtm.visRobot('~plot',x,y,c='m') # plot a magenta square, xformed
         wtm.emitTagMsg(tags2list(DEFAULT_MSG_TEMPLATE))
         sleep(0.5)
