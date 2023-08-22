@@ -26,6 +26,7 @@ class partFilter:
         self.particle = np.zeros((3, num_particles))       #particle position array
         self.particle_weights = (1/self.num_particles) * np.ones(num_particles)   #particle wt array creation with initial weights
         self.particle_sensor = np.zeros((2,num_particles))      #particle sensor array with 0 initial measurment
+        self.particle_mu=np.zeros((3,1))
         
         for i in range(100):
             progress("Particle filter initialization/re-initialization")
@@ -123,10 +124,10 @@ class partFilter:
 
         
         
-        particle_mu = np.mean(self.particle,axis=1)
+        self.particle_mu = np.mean(self.particle,axis=1)
         progress("_____________")
 
-        progress(particle_mu)
+        progress(self.particle_mu)
         
         sinSum = 0
         cosSum = 0
@@ -135,9 +136,9 @@ class partFilter:
             cosSum = cosSum + np.cos(self.particle[2,s])
             sinSum = sinSum + np.sin(self.particle[2,s])
             
-        particle_mu[2] = np.arctan2(sinSum,cosSum)
+        self.particle_mu[2] = np.arctan2(sinSum,cosSum)
         
-        zeroMean = self.particle - np.matlib.repmat(np.vstack(particle_mu),1,self.num_particles)
+        zeroMean = self.particle - np.matlib.repmat(np.vstack(self.particle_mu),1,self.num_particles)
         
         self.Sigma = np.dot(zeroMean, np.transpose(zeroMean))/self.num_particles
         
@@ -153,7 +154,13 @@ class partFilter:
         
         Todo next:-
         1)update particle filter by reinitializing particles when the current waypoint is updated - Done
-        2) Now you have to write a code to make the robot move using particle filter ok good o this tomorow
+        2) Now you have to write a code to make the robot move using particle filter ok good o this tomorow -Done buttt - the particles are propogating before the bot can move solved it by using yield instead of start
+        3) the particles are propogating to much so changed the devisor
+    
+    
+    issues to discuss:- communication diagram, 
+    how to solve the propogation issue and scalling of movements in sim and in code,
+    doviz isualisation
 '''
 
     

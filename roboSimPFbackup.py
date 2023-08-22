@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul 17 09:21:47 2023
+
+@author: hrb_xubu
+"""
+
 # file robotSimulator.py simulates a robot in an arena
 
 from numpy import mean, abs, asarray
@@ -248,7 +256,6 @@ class MoveOnU(Plan):
       self.tolerance = tolerance
       self.flag = 0
       self.currWaypoint = np.zeros([0,0])
-      self.particless=np.zeros((3,1))
       
     def updateParticles(self,dist):
         self.pf.justCheck()
@@ -259,12 +266,7 @@ class MoveOnU(Plan):
 
         self.pf.sensorModel(lastwp, nxtwp)
         self.pf.correction(self.meas_curr)
-        self.particless=self.pf.particle_mu
         
-        progress(self.particless)
-        progress("updated")
-        progress(self.particless)
-       
         #progress(self.pf.mu/100)
         
 
@@ -287,220 +289,6 @@ class MoveOnU(Plan):
             self.pf = partFilter(num_particles, init_pos, M,Q)
             
             self.currWaypoint = self.nxtwaypoint[0]
-            progress(self.pf.particle)
-        
-        if self.flag == 0:
-            if((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])<0 and (self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])<0):# nxt target in +ve x and y
-                if self.moveR.isRunning(): pass
-                self.moveR.dist = 10.0
-                #self.moveR.start()
-                yield self.moveR
-                #while self.moveR.isRunning(): pass
-
-                self.updateParticles(np.array([self.moveR.dist/2.5,0,0]))
-                
-                
-                if self.moveF.isRunning(): pass
-                self.moveF.dist = 10.0
-                #self.moveF.start()
-                yield self.moveF
-                #while self.moveF.isRunning(): pass
-
-                self.updateParticles(np.array([0,self.moveF.dist/10,0]))
-                
-                #progress("(say) North east")
-                
-            elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])>0 and (self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])>0):# nxt target in -ve x and y
-                if self.moveL.isRunning(): pass
-                self.moveL.dist = 10.0
-                #self.moveL.start()
-                yield self.moveL
-                #while self.moveL.isRunning(): pass
-
-                self.updateParticles(np.array([-1*self.moveL.dist/2.5,0,0]))
-                
-                if self.moveB.isRunning(): pass
-                self.moveB.dist = 10.0
-                #self.moveB.start()
-                yield self.moveB
-                #while self.moveB.isRunning(): pass
-
-                self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
-                
-                #progress("(say) South west")
-                
-            elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])<0 and (self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])>0):# nxt target in +ve x and -ve y
-                if self.moveR.isRunning(): pass
-                self.moveR.dist = 10.0
-                #self.moveR.start()
-                yield self.moveR
-                #while self.moveR.isRunning(): pass
-
-                self.updateParticles(np.array([self.moveR.dist/2.5,0,0]))
-                
-                if self.moveB.isRunning(): pass
-                self.moveB.dist = 10.0
-                #self.moveB.start()
-                yield self.moveB
-                #while self.moveB.isRunning(): pass
-                
-                self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
-                
-                #progress("(say) South east")
-                
-            elif((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])>0 and (self.nxtwaypoint[0][1]+150)-(150+self.nxtwaypoint[1][1])<0):# nxt target in -ve x and y
-                if self.moveL.isRunning(): pass
-                self.moveL.dist = 10.0
-                #self.moveL.start()
-                yield self.moveL
-                #while self.moveL.isRunning(): pass
-
-                self.updateParticles(np.array([-1*self.moveL.dist/2.5,0,0]))
-                
-                if self.moveF.isRunning(): pass
-                self.moveF.dist = 10.0
-                #self.moveF.start()
-                yield self.moveF
-                #while self.moveF.isRunning(): pass
-
-                self.updateParticles(np.array([0,self.moveF.dist/10,0]))
-                
-                #progress("(say) North west")
-            
-            self.flag=0
-            progress(self.pf.particle_mu)
-            progress(self.nxtwaypoint[1])
-           
-            
-            
-        while(len(self.nxtwaypoint)>1):
-            yield
-            distx=min(50, abs(int(self.pf.particle_mu[0]-self.nxtwaypoint[1][0])))
-            disty=  min(50, abs(int(self.pf.particle_mu[1]-self.nxtwaypoint[1][1])))
-                       
-            progress("((((((((((((((((((((()))))))))))))))))))))")
-            for i in range(10):
-                progress( distx)
-                progress( disty)
-                
-        
-            if self.pf.particle_mu[0] < self.nxtwaypoint[1][0] and self.pf.particle_mu[1] < self.nxtwaypoint[1][1]:
-                
-                    
-                progress("(say) north east")
-                if self.moveR.isRunning(): pass
-                self.moveR.dist = distx
-                #self.moveR.start()
-                yield self.moveR
-                #while self.moveR.isRunning(): pass
-    
-                self.updateParticles(np.array([self.moveR.dist/4,0,0]))
-                
-                
-                if self.moveF.isRunning(): pass
-                self.moveF.dist =  disty
-                #self.moveF.start()
-                yield self.moveF
-               # while self.moveF.isRunning(): pass
-    
-                self.updateParticles(np.array([0,self.moveF.dist/10,0]))
-                
-            elif self.pf.particle_mu[0] > self.nxtwaypoint[1][0] and self.pf.particle_mu[1] > self.nxtwaypoint[1][1]:
-                progress("(say) south west")
-                if self.moveL.isRunning(): pass
-                self.moveL.dist =  distx
-                #self.moveL.start()
-                yield self.moveL
-                #while self.moveL.isRunning(): pass
-    
-                self.updateParticles(np.array([-1*self.moveL.dist/2.5,0,0]))
-                
-                if self.moveB.isRunning(): pass
-                self.moveB.dist = disty
-                #self.moveB.start()
-                yield self.moveB
-                #while self.moveB.isRunning(): pass
-    
-                self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
-            
-            elif self.pf.particle_mu[0] < self.nxtwaypoint[1][0] and self.pf.particle_mu[1] > self.nxtwaypoint[1][1]:
-                progress("(say) south east")
-                if self.moveR.isRunning(): pass
-                self.moveR.dist =  distx
-                #self.moveR.start()
-                yield self.moveR
-                #while self.moveR.isRunning(): pass
-    
-                self.updateParticles(np.array([self.moveR.dist/4,0,0]))
-                
-                if self.moveB.isRunning(): pass
-                self.moveB.dist =  disty
-                #self.moveB.start()
-                yield self.moveB
-                #while self.moveB.isRunning(): pass
-                
-                self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
-                
-            elif self.pf.particle_mu[0] > self.nxtwaypoint[1][0] and self.pf.particle_mu[1] < self.nxtwaypoint[1][1]:
-                progress("(say)south west")
-                if self.moveL.isRunning(): pass
-                self.moveL.dist =  distx
-                #self.moveL.start()
-                yield self.moveL
-                #while self.moveL.isRunning(): pass
-    
-                self.updateParticles(np.array([-1*self.moveL.dist/4,0,0]))
-                
-                if self.moveF.isRunning(): pass
-                self.moveF.dist =  disty
-                #self.moveF.start()
-                yield self.moveF
-                #while self.moveF.isRunning(): pass
-    
-                self.updateParticles(np.array([0,self.moveF.dist/10,0]))
-                
-            elif self.pf.particle_mu[0] == self.nxtwaypoint[1][0] and self.pf.particle_mu[1] < self.nxtwaypoint[1][1]:
-                progress("(say) move up")
-                if self.moveF.isRunning(): pass
-                self.moveF.dist =  distx
-                #self.moveF.start()
-                yield self.moveF
-               # while self.moveF.isRunning(): pass
-    
-                self.updateParticles(np.array([0,self.moveF.dist/10,0]))
-                
-            elif self.pf.particle_mu[0] == self.nxtwaypoint[1][0] and self.pf.particle_mu[1] > self.nxtwaypoint[1][1]:
-                progress("(say)move down")
-                if self.moveB.isRunning(): pass
-                self.moveB.dist =  disty
-                #self.moveB.start()
-                yield self.moveB
-                #while self.moveB.isRunning(): pass
-                
-                self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
-                
-            elif self.pf.particle_mu[0] < self.nxtwaypoint[1][0] and self.pf.particle_mu[1] == self.nxtwaypoint[1][1]:
-                progress("(say)move right")
-                if self.moveR.isRunning(): pass
-                self.moveR.dist =  distx
-                #self.moveR.start()
-                yield self.moveR
-                #while self.moveR.isRunning(): pass
-    
-                self.updateParticles(np.array([self.moveR.dist/4,0,0]))
-               
-            
-            elif self.pf.particle_mu[0] > self.nxtwaypoint[1][0] and self.pf.particle_mu[1] == self.nxtwaypoint[1][1]:
-                progress("(say)  move left")
-                if self.moveL.isRunning(): pass
-                self.moveL.dist =  disty
-                #self.moveL.start()'
-                yield self.moveL
-                #while self.moveL.isRunning(): pass
-    
-                self.updateParticles(np.array([-1*self.moveL.dist/4,0,0]))
-                
-            
         
         
         
@@ -513,7 +301,13 @@ class MoveOnU(Plan):
         
         
         
-        '''
+        
+        
+        
+        
+        
+        
+        
         
         if(self.meas_curr[0]<100 or self.meas_curr[1]<100 ):
             #navigation when sensor readings are different
@@ -638,7 +432,6 @@ class MoveOnU(Plan):
                     self.updateParticles(np.array([0,-1*self.moveB.dist/10,0]))
                     return progress("(say) Move Backwards")
 
-        '''
             
  
       
@@ -692,7 +485,6 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     self.curwaypoint=None
     self.meas_curr = None
     self.moveA= MoveOnU(self, self.moveF,self.moveB,self.moveL,self.moveR,self.pf, self.nxtwaypoint, np.array([0,0]), 10)
-    self.particle =np.zeros((3,1))
 
   def showSensors( self ):
     """
@@ -724,9 +516,6 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     sim = self.robSim                        #this has robots position
     tag = sim.zTag * sim.ang + sim.pos     #tag position check
     
-    
-    
-    
     # Laser axis is based on tag and turret
     c = mean(tag) # center
     r = mean(abs(tag-c))
@@ -738,7 +527,6 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
     
     # Start a new visual in robot subplot
     self.visRobotClear()
-
     # plot command in robot subplot,
     #   '~' prefix changes coordinates using homography
     self.visRobot('~plot',
@@ -747,21 +535,13 @@ class RobotSimulatorApp( JoyApp, JoyAppWptSensorMixin ):
         c='g')
     self.visRobot('grid',1) 
     
-    
-    if self.moveA.particless[0]:
-        self.particle=self.moveA.particless
-        progress("IN       DOVISIISSSSSSSSSSSSSSSSSS")
-        progress(self.particle)
 
    
     
     # Start a new visual in arena subplot
     self.visArenaClear()
-    x=[int(self.particle[0]-10), int(self.particle[0]),int( self.particle[0])]
-    y=[int(self.particle[1]),int(self.particle[1]+10), int(self.particle[1])]
-    progress(x)
-    progress(y)
-    self.visArena('~plot',x,y,c='g') # plot a green square, xformed
+    
+    #self.visArena('~plot',x,y,c='g') # plot a green square, xformed
     
     
     
