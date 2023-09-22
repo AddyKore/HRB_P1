@@ -193,7 +193,7 @@ class SimpleRobotSim( RobotSimInterface ):
         self.motors[0].set_pos(self.position[0])
         self.motors[3].set_pos(-self.position[3])
         self.motors[0].set_speed(speed)
-        self.motors[3].set_speed(speed
+        self.motors[3].set_speed(speed)
     
     def movef(self,dist):
         # Move in direction of self.ang

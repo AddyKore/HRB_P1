@@ -196,17 +196,7 @@ class MoveOnU(Plan):
                     progress("LOOOOOOOOOOOOOOOOOOOOOOOSSSSSSSSSSSSSSTTTTTTTTTTTTT")
                     progress("(say) Move forward")
                   self.flag=0
-                  self.multi+=30
-
-
-
-                    
-                    
-            
-       
-        
-            
-            
+                  self.multi+=30            
         #navigation when both sensors have readings above 150
         if((self.nxtwaypoint[0][0]+150)-(150+self.nxtwaypoint[1][0])<0): # to make the range of x from -150 to 150 to 0 to 300
             flag=0

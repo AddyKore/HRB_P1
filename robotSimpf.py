@@ -923,3 +923,42 @@ if __name__=="__main__":
   else:
       app=RobotSimulatorApp(cfg=cfg)
   app.run()
+
+'''
+if __name__=="__main__":
+  from sys import argv
+  print("""
+  Running the robot simulator
+
+  Listens on local port 0xBAA (2986) for incoming waypointServer
+  information, and also transmits simulated tagStreamer messages to
+  the waypointServer at ip and port given on commandline
+
+  USAGE:
+    %s
+        Connect to default host and port
+    %s <host>
+        Connect to specified host on default port
+    %s <host> <port>
+        Connect to specified host on specified port
+  """ % ((argv[0],)*3))
+  import sys
+  # cfg = {'windowSize' : [160,120]}
+  # if len(argv)>2:
+  #     app=RobotSimulatorApp(wphAddr=argv[1],wphPort=int(argv[2]),cfg=cfg)
+  # elif len(argv)==2:
+  #     app=RobotSimulatorApp(wphAddr=argv[1],cfg=cfg)
+  # else:
+  #     app=RobotSimulatorApp(cfg=cfg)
+  # app.run()
+
+
+
+  robot = {'count':4,'names':{0x25:'m1', 0x02: 'm2', 0x37: 'm3', 0x58: 'm4'}, 'fillMissing':True,'required':[0x25,0x02,0x37,0x58]}
+  if len(sys.argv)>1:
+      address = sys.argv[1]
+  else:
+      address = WAYPOINT_HOST
+  app=RobotSimulatorApp(wphAddr=argv[1], robot=robot, cfg={'windowSize' : [800,600]})
+  app.run()
+'''
